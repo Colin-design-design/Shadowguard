@@ -25,6 +25,9 @@ def main(argv=None) -> int:
     parser.add_argument("--json", action="store_true", help="output JSON report")
     parser.add_argument("--fast", action="store_true",
                         help="seed lexicon only (fast startup)")
+    parser.add_argument("--fuzzy", action="store_true",
+                        help="enable Phase-2 fuzzy phoneme matching "
+                             "(higher recall, slower, more false positives)")
     parser.add_argument("--limit", type=int, default=20000,
                         help="procedural lexicon word cap (default 20000)")
     args = parser.parse_args(argv)
@@ -39,7 +42,8 @@ def main(argv=None) -> int:
     else:
         parser.error("provide text, --file, or pipe with '-'")
 
-    guard = ShadowGuard(use_procedural=not args.fast, procedural_limit=args.limit)
+    guard = ShadowGuard(use_procedural=not args.fast, procedural_limit=args.limit,
+                        use_fuzzy=args.fuzzy)
     result = guard.scan(text)
 
     if args.json:

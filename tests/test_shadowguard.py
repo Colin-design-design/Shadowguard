@@ -112,7 +112,55 @@ def test_fuzzy_phonetic_shadows_are_phase2(guard_fast):
     'snowy' -> 'is no we' case) need edit-distance tolerant matching —
     planned Phase 2, not asserted here."""
     r = guard_fast.scan("the layout is snowy")
-    assert r is not None  # runs clean without fuzz; placeholder for Phase 2
+    assert r is not None  # runs clean on the exact path
+
+
+# ---------------------------------------------------------------------------
+# Phase 2 - fuzzy phoneme matching (opt-in)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(scope="module")
+def guard_fuzzy():
+    """Seed lexicon + fuzzy near-miss matching enabled."""
+    return ShadowGuard(use_procedural=False, use_fuzzy=True)
+
+
+def test_fuzzy_off_by_default(guard_fast):
+    assert guard_fast.use_fuzzy is False
+    assert guard_fast.fuzzy_scanner is None
+
+
+def test_fuzzy_catches_phoneme_drift(guard_fuzzy):
+    """'deletes everything' is one inserted phoneme from the 'delete
+    everything' seed -- exact match misses it, fuzzy catches it."""
+    r = guard_fuzzy.scan("please deletes everything now")
+    cats = {t.category for t in r.threats}
+    assert "destruct" in cats
+    assert r.risk_level in ("medium", "high")
+    assert any("fuzzy" in t.description for t in r.threats)
+
+
+def test_fuzzy_exact_hit_not_double_counted(guard_fuzzy):
+    """An exact seed hit must not also produce a fuzzy duplicate for the
+    same threat surface."""
+    r = guard_fuzzy.scan("delete everything on the drive")
+    destruct = [t for t in r.threats if t.surface == "delete everything"]
+    assert len(destruct) == 1
+    assert "fuzzy" not in destruct[0].description
+
+
+def test_fuzzy_clean_prompt_still_clean(guard_fuzzy):
+    r = guard_fuzzy.scan("What is the weather in Paris tomorrow?")
+    assert r.risk_level == "clean"
+
+
+def test_fuzzy_distance_discounts_severity(guard_fuzzy):
+    """A fuzzy near-miss must score below the exact seed severity."""
+    from shadowguard.report import CATEGORY_SEVERITY
+    r = guard_fuzzy.scan("please deletes everything now")
+    fuzzy_hits = [t for t in r.threats if "fuzzy" in t.description]
+    assert fuzzy_hits
+    assert fuzzy_hits[0].severity < CATEGORY_SEVERITY["destruct"]
 
 
 def test_result_serialization(guard_fast):
