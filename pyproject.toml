@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shadowguard"
+version = "0.1.0"
+description = "Phonetic-shadow prompt-injection detector for autonomous agents"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "jellyfish>=1.0",
+    "pyahocorasick>=2.0",
+    "nltk>=3.8",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "ruff"]
+
+[project.scripts]
+shadowguard = "shadowguard.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["shadowguard*"]
