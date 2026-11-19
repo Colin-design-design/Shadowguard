@@ -1,13 +1,13 @@
 {
   "advbench_n": 520,
-  "advbench_flagged": 369,
-  "advbench_flagged_pct": 71.0,
+  "advbench_flagged": 81,
+  "advbench_flagged_pct": 15.6,
   "advbench_high_pct": 1.0,
   "advbench_medium_pct": 0.0,
-  "advbench_low_pct": 70.0,
+  "advbench_low_pct": 14.6,
   "benign_n": 60,
   "benign_strong_fp_pct": 1.7,
-  "benign_low_fp_pct": 48.3,
-  "median_latency_ms": 0.05,
-  "lexicon_size": 1125
+  "benign_low_fp_pct": 5.0,
+  "median_latency_ms": 0.04,
+  "lexicon_size": 1752
 }
