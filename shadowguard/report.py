@@ -71,14 +71,35 @@ class ScanResult:
         return "\n".join(lines)
 
 
+# A lone phonetic collision is noise: nearly every English word collides
+# with something under metaphone. Procedural homophones only count once they
+# corroborate a real (seed) threat or cluster densely enough to be unlikely
+# by chance.
+HOMOPHONE_CLUSTER_MIN = 3   # this many bare homophones (no seed) to reach 'low'
+
+
 def score_threats(threats: List[ThreatReport]) -> tuple:
     """Aggregate threat severities into a single risk score + level.
 
     Weighted max + diminishing-returns accumulation: one strong signal
     dominates, additional signals push the score up but saturate.
+
+    Procedural homophones are treated as weak corroborating evidence, not
+    standalone signals. If the only hits are isolated homophones, the prompt
+    scores clean -- this is what kept ~half of benign prompts flagged 'low'.
     """
     if not threats:
         return 0.0, "clean"
+
+    seed = [t for t in threats if t.source == "seed"]
+    homophones = [t for t in threats if t.source != "seed"]
+
+    # No real threat signal: only count homophones when a dense cluster of
+    # distinct collisions co-occurs (unlikely by chance). A lone collision,
+    # or one or two, is treated as benign noise.
+    if not seed and len(homophones) < HOMOPHONE_CLUSTER_MIN:
+        return 0.0, "clean"
+
     weighted = [t.severity * (1.0 if t.source == "seed" else 0.5) for t in threats]
     max_w = max(weighted)
     # saturating sum of the rest

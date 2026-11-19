@@ -144,7 +144,10 @@ def build_lexicon(use_procedural: bool = True, procedural_limit: int = 20000) ->
         from nltk.corpus import words as nltk_words
         word_list = [w.lower() for w in nltk_words.words() if len(w) > 3]
 
-    word_list = list(set(word_list))[:procedural_limit]
+    # sort before slicing: set() iteration order varies per process (hash
+    # randomization), which would make the mined lexicon -- and every eval
+    # number derived from it -- non-reproducible across runs.
+    word_list = sorted(set(word_list))[:procedural_limit]
 
     # metaphone clustering: words sharing a code are homophone-ish
     clusters: Dict[str, List[str]] = defaultdict(list)
